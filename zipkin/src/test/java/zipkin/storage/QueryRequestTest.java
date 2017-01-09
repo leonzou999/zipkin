@@ -16,9 +16,15 @@ package zipkin.storage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import zipkin.Annotation;
 import zipkin.Constants;
+import zipkin.Span;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static zipkin.Constants.SERVER_RECV;
+import static zipkin.TestObjects.APP_ENDPOINT;
+import static zipkin.TestObjects.TODAY;
 import static zipkin.TraceKeys.HTTP_METHOD;
 
 public class QueryRequestTest {
@@ -177,5 +183,18 @@ public class QueryRequestTest {
     thrown.expectMessage("maxDuration should be >= minDuration");
 
     QueryRequest.builder().serviceName("foo").minDuration(1L).maxDuration(0L).build();
+  }
+
+  /** When a span comes in without a timestamp, use the implicit one based on annotations. */
+  @Test
+  public void matchesImplicitTimestamp() {
+    Span asyncReceive = Span.builder().traceId(10L).id(10L).name("receive")
+        .addAnnotation(Annotation.create((TODAY) * 1000, SERVER_RECV, APP_ENDPOINT))
+        .build();
+
+    QueryRequest request = QueryRequest.builder().endTs(TODAY).build();
+
+    assertThat(request.test(asList(asyncReceive)))
+        .isTrue();
   }
 }

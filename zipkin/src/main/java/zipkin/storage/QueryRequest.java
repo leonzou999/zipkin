@@ -24,6 +24,7 @@ import zipkin.Annotation;
 import zipkin.BinaryAnnotation;
 import zipkin.Endpoint;
 import zipkin.Span;
+import zipkin.internal.ApplyTimestampAndDuration;
 import zipkin.internal.Nullable;
 
 import static zipkin.Constants.CORE_ANNOTATIONS;
@@ -356,7 +357,7 @@ public final class QueryRequest {
 
   /** Tests the supplied trace against the current request */
   public boolean test(List<Span> spans) {
-    Long timestamp = spans.get(0).timestamp;
+    Long timestamp = ApplyTimestampAndDuration.guessTimestamp(spans.get(0));
     if (timestamp == null ||
         timestamp < (endTs - lookback) * 1000 ||
         timestamp > endTs * 1000) {
